@@ -138,4 +138,29 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 void ADegreeProjectCharacter::FireGun()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Fired the gun!"));
+
+	FVector Start = Muzzle->GetComponentLocation();
+	FVector ForwardVector = FollowCamera->GetForwardVector();
+	FVector End = Start + (ForwardVector * 10000.0f); // Trace 10,000 units forward
+
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this); // Ignore self
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECC_Visibility,
+		TraceParams
+	);
+
+	if (bHit)
+	{
+		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, false, 1.0f, 0, 1.0f);
+	}
+	else
+	{
+		DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 1.0f);
+	}
 }
