@@ -135,6 +135,19 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void ADegreeProjectCharacter::PullPlayer(FVector HitLocation)
+{
+	FVector PlayerLocation = GetActorLocation();
+	FVector PullDirection = HitLocation - PlayerLocation;
+	PullDirection.Normalize();
+
+	float PullStrength = 1500.f;
+
+	FVector LaunchVelocity = PullDirection * PullStrength;
+	
+	LaunchCharacter(LaunchVelocity,true, true);
+}
+
 void ADegreeProjectCharacter::FireGun()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Fired the gun!"));
@@ -158,6 +171,7 @@ void ADegreeProjectCharacter::FireGun()
 	if (bHit)
 	{
 		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, false, 1.0f, 0, 1.0f);
+		PullPlayer(HitResult.Location);
 	}
 	else
 	{

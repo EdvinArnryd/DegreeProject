@@ -52,6 +52,8 @@ class ADegreeProjectCharacter : public ACharacter
 
 public:
 	ADegreeProjectCharacter();
+
+	void PullPlayer(FVector HitLocation);
 	
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
