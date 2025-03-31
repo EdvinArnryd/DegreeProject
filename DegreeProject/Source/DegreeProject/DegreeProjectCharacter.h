@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "DegreeProjectCharacter.generated.h"
 
+class UPhysicsConstraintComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -49,6 +50,9 @@ class ADegreeProjectCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Muzzle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
+	UPhysicsConstraintComponent* PhysicsConstraint;
 
 public:
 	ADegreeProjectCharacter();
