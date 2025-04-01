@@ -58,12 +58,24 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	PhysicsConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("PhysicsConstraint"));
 	PhysicsConstraint->SetupAttachment(RootComponent);
 
+	GrappleConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("GrappleConstraint"));
+	GrappleConstraint->SetupAttachment(RootComponent);
+
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
+void ADegreeProjectCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bIsGrappling) 
+	{
+		FVector ForwardForce = GetActorForwardVector() * 500.0f; // Adjust force as needed
+		GetCapsuleComponent()->AddForce(ForwardForce * GetCapsuleComponent()->GetMass());
+	}
+}
 
 void ADegreeProjectCharacter::NotifyControllerChanged()
 {
@@ -175,10 +187,68 @@ void ADegreeProjectCharacter::FireGun()
 	if (bHit)
 	{
 		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, false, 1.0f, 0, 1.0f);
-		PullPlayer(HitResult.Location);
+		// PullPlayer(HitResult.Location);
+		AttachGrapple(HitResult.Location, HitResult.GetActor());
 	}
 	else
 	{
 		DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 1.0f);
 	}
 }
+
+void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
+{
+	if (!HitActor) return;
+
+	UPrimitiveComponent* HitComponent = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
+	if (!HitComponent) return;
+
+	// Move constraint to the hit location
+	GrappleConstraint->SetWorldLocation(HitLocation);
+
+	// Attach the player to the world using the hit component
+	GrappleConstraint->SetConstrainedComponents(
+		Cast<UPrimitiveComponent>(GetCapsuleComponent()), NAME_None,  // Constrain the player's capsule (not mesh)
+		HitComponent, NAME_None // Constrain to the hit actor’s specific component
+	);
+
+	// Set limits so the player can swing
+	GrappleConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+	GrappleConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+	GrappleConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+
+	GrappleConstraint->SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+	GrappleConstraint->SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+	GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+
+	// Disable regular movement (important)
+	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+	// Allow the player to swing
+	GetCapsuleComponent()->SetSimulatePhysics(true);
+	GetCapsuleComponent()->SetEnableGravity(true);
+
+	FVector SwingForce = GetActorForwardVector() * 2000.0f; // Adjust for strength
+	GetCapsuleComponent()->AddImpulse(SwingForce * GetCapsuleComponent()->GetMass());
+
+	UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Player should now be swinging."));
+}
+
+
+
+
+void ADegreeProjectCharacter::SwingForward()
+{
+	FVector ForwardForce = GetActorForwardVector() * 1000.0f;
+	GetCharacterMovement()->AddImpulse(ForwardForce, true);
+}
+
+void ADegreeProjectCharacter::SwingBackward()
+{
+	FVector BackwardForce = -GetActorForwardVector() * 1000.0f;
+	GetCharacterMovement()->AddImpulse(BackwardForce, true);
+}
+
+
+

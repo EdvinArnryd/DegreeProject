@@ -54,6 +54,8 @@ class ADegreeProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
 	UPhysicsConstraintComponent* PhysicsConstraint;
 
+	UPhysicsConstraintComponent* GrappleConstraint;
+
 public:
 	ADegreeProjectCharacter();
 
@@ -78,5 +80,15 @@ protected:
 
 	void FireGun();
 
+	void AttachGrapple(FVector HitLocation, AActor* HitActor);
+
+	void SwingForward();
+
+	void SwingBackward();
+
+	bool bIsGrappling;
+
+public:
+	virtual void Tick(float DeltaSeconds) override;
 };
 
