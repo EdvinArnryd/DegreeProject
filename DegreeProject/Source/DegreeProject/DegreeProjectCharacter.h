@@ -12,6 +12,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UCableComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -55,6 +56,8 @@ class ADegreeProjectCharacter : public ACharacter
 	UPhysicsConstraintComponent* PhysicsConstraint;
 
 	UPhysicsConstraintComponent* GrappleConstraint;
+
+	UCableComponent* GrappleCable;
 
 public:
 	ADegreeProjectCharacter();

@@ -11,6 +11,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
+#include "CableComponent.h"
+#include "MovieSceneTracksComponentTypes.h"
 #include "Storage/Nodes/FileEntry.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -60,6 +62,10 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 
 	GrappleConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("GrappleConstraint"));
 	GrappleConstraint->SetupAttachment(RootComponent);
+
+	GrappleCable = CreateDefaultSubobject<UCableComponent>(TEXT("GrappleCable"));
+	GrappleCable->SetupAttachment(Muzzle);
+	GrappleCable->bAttachEnd = true;
 
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
@@ -200,6 +206,8 @@ void ADegreeProjectCharacter::FireGun()
 void ADegreeProjectCharacter::ReleaseGun()
 {
 	GetCapsuleComponent()->SetSimulatePhysics(false);
+
+	GrappleCable->SetVisibility(false);
 }
 
 void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
@@ -226,6 +234,15 @@ void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActo
 	GrappleConstraint->SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
 	GrappleConstraint->SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
 	GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+
+	// Attach one end of the cable to the player
+	GrappleCable->SetVisibility(true);
+	GrappleCable->SetAttachEndTo(this, Muzzle->GetFName());
+	GrappleCable->SetWorldLocation(HitLocation);
+
+	// Adjust cable length dynamically
+	float Distance = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation);
+	GrappleCable->CableLength = Distance/10;
 
 	// Disable regular movement (important)
 	// GetCharacterMovement()->SetMovementMode(MOVE_Flying);
