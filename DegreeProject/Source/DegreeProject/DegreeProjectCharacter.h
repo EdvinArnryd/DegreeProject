@@ -80,6 +80,8 @@ protected:
 
 	void FireGun();
 
+	void ReleaseGun();
+
 	void AttachGrapple(FVector HitLocation, AActor* HitActor);
 
 	void SwingForward();

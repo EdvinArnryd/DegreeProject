@@ -108,6 +108,7 @@ void ADegreeProjectCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 
 		// Fire Gun
 		EnhancedInputComponent->BindAction(FireGunAction, ETriggerEvent::Started, this, &ADegreeProjectCharacter::FireGun);
+		EnhancedInputComponent->BindAction(FireGunAction, ETriggerEvent::Completed, this, &ADegreeProjectCharacter::ReleaseGun);
 	}
 	else
 	{
@@ -196,6 +197,11 @@ void ADegreeProjectCharacter::FireGun()
 	}
 }
 
+void ADegreeProjectCharacter::ReleaseGun()
+{
+	GetCapsuleComponent()->SetSimulatePhysics(false);
+}
+
 void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
 {
 	if (!HitActor) return;
@@ -222,15 +228,15 @@ void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActo
 	GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
 
 	// Disable regular movement (important)
-	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	// GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	// GetCharacterMovement()->Velocity = FVector::ZeroVector;
 
 	// Allow the player to swing
 	GetCapsuleComponent()->SetSimulatePhysics(true);
-	GetCapsuleComponent()->SetEnableGravity(true);
+	// GetCapsuleComponent()->SetEnableGravity(true);
 
-	FVector SwingForce = GetActorForwardVector() * 2000.0f; // Adjust for strength
-	GetCapsuleComponent()->AddImpulse(SwingForce * GetCapsuleComponent()->GetMass());
+	// FVector SwingForce = GetFollowCamera()->GetForwardVector() * 2000.0f; // Adjust for strength
+	// GetCapsuleComponent()->AddImpulse(SwingForce * GetCapsuleComponent()->GetMass());
 
 	UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Player should now be swinging."));
 }
