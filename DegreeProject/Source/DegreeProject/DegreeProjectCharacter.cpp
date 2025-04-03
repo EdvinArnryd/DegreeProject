@@ -237,7 +237,7 @@ void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActo
 
 	// Attach one end of the cable to the player
 	GrappleCable->SetVisibility(true);
-	GrappleCable->SetAttachEndTo(this, Muzzle->GetFName());
+	// GrappleCable->SetAttachEndTo(HitActor, HitActor->GetFName());
 	GrappleCable->SetWorldLocation(HitLocation);
 
 	// Adjust cable length dynamically

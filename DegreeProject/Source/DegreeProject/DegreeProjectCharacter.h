@@ -57,6 +57,7 @@ class ADegreeProjectCharacter : public ACharacter
 
 	UPhysicsConstraintComponent* GrappleConstraint;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
 	UCableComponent* GrappleCable;
 
 public:
