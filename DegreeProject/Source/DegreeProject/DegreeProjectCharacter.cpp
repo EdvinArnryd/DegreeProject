@@ -76,10 +76,23 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (bIsGrappling) 
+	if (bIsGrappling)
 	{
-		FVector ForwardForce = GetActorForwardVector() * 500.0f; // Adjust force as needed
-		GetCapsuleComponent()->AddForce(ForwardForce * GetCapsuleComponent()->GetMass());
+		FVector SwingPoint = GrappleConstraint->GetComponentLocation();
+		FVector PlayerLocation = GetActorLocation();
+
+		// 🚀 **Spring Force Towards Swing Point**
+		FVector DirectionToSwing = (SwingPoint - PlayerLocation).GetSafeNormal();
+		float Distance = FVector::Dist(SwingPoint, PlayerLocation);
+		float SpringForceMagnitude = FMath::Clamp(Distance * 20.0f, 0.0f, 5000.0f);
+
+		FVector SwingForce = DirectionToSwing * SpringForceMagnitude;
+
+		GetCharacterMovement()->AddForce(SwingForce);
+
+		// 🚀 **Gravity Effect**
+		FVector GravityForce = FVector(0, 0, -980.0f);
+		GetCharacterMovement()->AddForce(GravityForce * GetCharacterMovement()->Mass);
 	}
 }
 
@@ -206,57 +219,55 @@ void ADegreeProjectCharacter::FireGun()
 void ADegreeProjectCharacter::ReleaseGun()
 {
 	GetCapsuleComponent()->SetSimulatePhysics(false);
-
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	GrappleCable->SetVisibility(false);
 }
 
 void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
 {
-	if (!HitActor) return;
+    if (!HitActor) return;
 
-	UPrimitiveComponent* HitComponent = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
-	if (!HitComponent) return;
+    UPrimitiveComponent* HitComponent = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
+    if (!HitComponent) return;
 
-	// Move constraint to the hit location
-	GrappleConstraint->SetWorldLocation(HitLocation);
+    // Move constraint to the hit location
+    GrappleConstraint->SetWorldLocation(HitLocation);
 
-	// Attach the player to the world using the hit component
-	GrappleConstraint->SetConstrainedComponents(
-		Cast<UPrimitiveComponent>(GetCapsuleComponent()), NAME_None,  // Constrain the player's capsule (not mesh)
-		HitComponent, NAME_None // Constrain to the hit actor’s specific component
-	);
+    // Attach player capsule to the grapple point
+    GrappleConstraint->SetConstrainedComponents(
+        Cast<UPrimitiveComponent>(GetCapsuleComponent()), NAME_None,
+        HitComponent, NAME_None
+    );
 
-	// Set limits so the player can swing
-	GrappleConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
-	GrappleConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
-	GrappleConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+    // Set swinging constraints
+    GrappleConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+    GrappleConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+    GrappleConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
 
-	GrappleConstraint->SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
-	GrappleConstraint->SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
-	GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+    GrappleConstraint->SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+    GrappleConstraint->SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+    GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
 
-	// Attach one end of the cable to the player
-	GrappleCable->SetVisibility(true);
-	// GrappleCable->SetAttachEndTo(HitActor, HitActor->GetFName());
-	GrappleCable->SetWorldLocation(HitLocation);
+    // Enable the cable component
+    GrappleCable->SetVisibility(true);
+    GrappleCable->SetWorldLocation(HitLocation);
+    GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation) / 10;
 
-	// Adjust cable length dynamically
-	float Distance = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation);
-	GrappleCable->CableLength = Distance/10;
+    // 🚀 **Hybrid Physics Fix**
+    GetCharacterMovement()->SetMovementMode(MOVE_Flying); // Keep controlled movement
+    GetCharacterMovement()->Velocity = FVector::ZeroVector;
 
-	// Disable regular movement (important)
-	// GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-	// GetCharacterMovement()->Velocity = FVector::ZeroVector;
+    // 🚀 **Apply an initial impulse for the swing**
+    FVector SwingDirection = (HitLocation - GetActorLocation()).GetSafeNormal();
+    GetCharacterMovement()->AddImpulse(SwingDirection * 1500.0f, true);
 
-	// Allow the player to swing
-	GetCapsuleComponent()->SetSimulatePhysics(true);
-	// GetCapsuleComponent()->SetEnableGravity(true);
+    // 🚀 **Enable physics interactions without overriding movement**
+    GetCapsuleComponent()->SetSimulatePhysics(false); // Do NOT fully simulate physics
+    GetCapsuleComponent()->SetEnableGravity(true); // Keep gravity enabled
 
-	// FVector SwingForce = GetFollowCamera()->GetForwardVector() * 2000.0f; // Adjust for strength
-	// GetCapsuleComponent()->AddImpulse(SwingForce * GetCapsuleComponent()->GetMass());
-
-	UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Player should now be swinging."));
+    UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Swinging started."));
 }
+
 
 
 
