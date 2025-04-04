@@ -76,24 +76,24 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (bIsGrappling)
-	{
-		FVector SwingPoint = GrappleConstraint->GetComponentLocation();
-		FVector PlayerLocation = GetActorLocation();
-
-		// 🚀 **Spring Force Towards Swing Point**
-		FVector DirectionToSwing = (SwingPoint - PlayerLocation).GetSafeNormal();
-		float Distance = FVector::Dist(SwingPoint, PlayerLocation);
-		float SpringForceMagnitude = FMath::Clamp(Distance * 20.0f, 0.0f, 5000.0f);
-
-		FVector SwingForce = DirectionToSwing * SpringForceMagnitude;
-
-		GetCharacterMovement()->AddForce(SwingForce);
-
-		// 🚀 **Gravity Effect**
-		FVector GravityForce = FVector(0, 0, -980.0f);
-		GetCharacterMovement()->AddForce(GravityForce * GetCharacterMovement()->Mass);
-	}
+	// if (bIsGrappling)
+	// {
+	// 	FVector SwingPoint = GrappleConstraint->GetComponentLocation();
+	// 	FVector PlayerLocation = GetActorLocation();
+	//
+	// 	// 🚀 **Spring Force Towards Swing Point**
+	// 	FVector DirectionToSwing = (SwingPoint - PlayerLocation).GetSafeNormal();
+	// 	float Distance = FVector::Dist(SwingPoint, PlayerLocation);
+	// 	float SpringForceMagnitude = FMath::Clamp(Distance * 20.0f, 0.0f, 5000.0f);
+	//
+	// 	FVector SwingForce = DirectionToSwing * SpringForceMagnitude;
+	//
+	// 	GetCharacterMovement()->AddForce(SwingForce);
+	//
+	// 	// 🚀 **Gravity Effect**
+	// 	FVector GravityForce = FVector(0, 0, -980.0f);
+	// 	GetCharacterMovement()->AddForce(GravityForce * GetCharacterMovement()->Mass);
+	// }
 }
 
 void ADegreeProjectCharacter::NotifyControllerChanged()
@@ -187,7 +187,6 @@ void ADegreeProjectCharacter::PullPlayer(FVector HitLocation)
 void ADegreeProjectCharacter::FireGun()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Fired the gun!"));
-
 	FVector Start = Muzzle->GetComponentLocation();
 	FVector ForwardVector = FollowCamera->GetForwardVector();
 	FVector End = Start + (ForwardVector * 10000.0f); // Trace 10,000 units forward
@@ -207,7 +206,7 @@ void ADegreeProjectCharacter::FireGun()
 	if (bHit)
 	{
 		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, false, 1.0f, 0, 1.0f);
-		// PullPlayer(HitResult.Location);
+		PullPlayer(HitResult.Location);
 		AttachGrapple(HitResult.Location, HitResult.GetActor());
 	}
 	else
@@ -221,6 +220,22 @@ void ADegreeProjectCharacter::ReleaseGun()
 	GetCapsuleComponent()->SetSimulatePhysics(false);
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	GrappleCable->SetVisibility(false);
+
+	// FVector launchForward = GetCharacterMovement()->GetForwardVector() * launchSpeed;
+	
+	// FVector CapsuleVelocity = GetCapsuleComponent()->GetComponentVelocity();
+	// FVector CapsuleDirection = -CapsuleVelocity.GetSafeNormal();
+	//
+	// FVector LaunchForward = CapsuleDirection * launchSpeed;
+
+	FVector CharacterVelocity = GetCharacterMovement()->Velocity;
+	FVector CharacterDirection = CharacterVelocity.GetSafeNormal();
+
+	FVector LaunchForward = CharacterDirection * launchSpeed;
+
+	// FVector LaunchForward = GetFollowCamera()->GetForwardVector() * launchSpeed;
+
+	LaunchCharacter(LaunchForward, true, true);
 }
 
 void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
@@ -254,15 +269,15 @@ void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActo
     GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation) / 10;
 
     // 🚀 **Hybrid Physics Fix**
-    GetCharacterMovement()->SetMovementMode(MOVE_Flying); // Keep controlled movement
-    GetCharacterMovement()->Velocity = FVector::ZeroVector;
-
-    // 🚀 **Apply an initial impulse for the swing**
+    // GetCharacterMovement()->SetMovementMode(MOVE_Flying); // Keep controlled movement
+    // GetCharacterMovement()->Velocity = FVector::ZeroVector;
+    //
+    // // 🚀 **Apply an initial impulse for the swing**
     FVector SwingDirection = (HitLocation - GetActorLocation()).GetSafeNormal();
-    GetCharacterMovement()->AddImpulse(SwingDirection * 1500.0f, true);
+    GetCapsuleComponent()->AddImpulse(SwingDirection * 50000.0f, NAME_None);
 
     // 🚀 **Enable physics interactions without overriding movement**
-    GetCapsuleComponent()->SetSimulatePhysics(false); // Do NOT fully simulate physics
+    GetCapsuleComponent()->SetSimulatePhysics(true); // Do NOT fully simulate physics
     GetCapsuleComponent()->SetEnableGravity(true); // Keep gravity enabled
 
     UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Swinging started."));
