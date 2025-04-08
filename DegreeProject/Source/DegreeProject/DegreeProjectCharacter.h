@@ -92,9 +92,14 @@ protected:
 
 	void AttachGrapple(FVector HitLocation, AActor* HitActor);
 
-	void SwingForward();
+	void FireHook();
 
-	void SwingBackward();
+	void ReleaseHook();
+
+	void Swing(FVector HitLocation, AActor* HitActor);
+
+	bool bIsSwinging;
+	
 
 	bool bIsGrappling;
 
