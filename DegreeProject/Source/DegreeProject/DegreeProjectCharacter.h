@@ -74,6 +74,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
 	float launchSpeed = 1500;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
+	float PublicSwingSpeed = 1.01f;
+
 protected:
 
 	/** Called for movement input */
@@ -100,8 +103,10 @@ protected:
 
 	bool bIsSwinging;
 	
-
 	bool bIsGrappling;
+
+	UPROPERTY()
+	FVector CurrentGrapplePoint;
 
 public:
 	virtual void Tick(float DeltaSeconds) override;

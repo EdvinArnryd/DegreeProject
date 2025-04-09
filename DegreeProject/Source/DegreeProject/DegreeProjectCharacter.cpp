@@ -75,6 +75,54 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (bIsSwinging)
+	{
+		FVector DirectionToAnchor = (CurrentGrapplePoint - GetActorLocation());
+		float Distance = DirectionToAnchor.Size();
+		FVector RopeDir = DirectionToAnchor / Distance;
+
+		// Adjust velocity to simulate swinging
+		FVector Velocity = GetCharacterMovement()->Velocity * PublicSwingSpeed;
+
+		// Gravity-style pull
+		FVector Gravity = FVector(0.f, 0.f, -980.f); // tweak this for feel
+		FVector TangentVelocity = Velocity - FVector::DotProduct(Velocity, RopeDir) * RopeDir;
+
+		FVector NewVelocity = TangentVelocity + Gravity * DeltaSeconds;
+
+		GetCharacterMovement()->Velocity = NewVelocity;
+		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), NewVelocity.Size());
+
+		// Optional: update cable visuals
+		GrappleCable->SetWorldLocation(CurrentGrapplePoint);
+		GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), CurrentGrapplePoint) / 10;
+
+		// Rope Direction
+		DrawDebugLine(
+		GetWorld(),
+		GetActorLocation(),
+		CurrentGrapplePoint,
+		FColor::Green,
+		false, -1.f, 0, 2.f);
+
+		// Velocity Direction
+		DrawDebugLine(
+		GetWorld(),
+		GetActorLocation(),
+		GetActorLocation() + GetCharacterMovement()->Velocity * 0.1f,
+		FColor::Blue,
+		false, -1.f, 0, 2.f);
+
+		// Tangential Swing
+		DrawDebugLine(
+		GetWorld(),
+		GetActorLocation(),
+		GetActorLocation() + TangentVelocity * 0.1f,
+		FColor::Red,
+		false, -1.f, 0, 2.f);
+
+
+	}
 }
 
 void ADegreeProjectCharacter::NotifyControllerChanged()
@@ -152,110 +200,109 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void ADegreeProjectCharacter::PullPlayer(FVector HitLocation)
-{
-	FVector PlayerLocation = GetActorLocation();
-	FVector PullDirection = HitLocation - PlayerLocation;
-	PullDirection.Normalize();
-
-	float PullStrength = 1500.f;
-
-	FVector LaunchVelocity = PullDirection * PullStrength;
-	
-	LaunchCharacter(LaunchVelocity,true, true);
-}
-
-void ADegreeProjectCharacter::FireGun()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Fired the gun!"));
-	FVector Start = Muzzle->GetComponentLocation();
-	FVector ForwardVector = FollowCamera->GetForwardVector();
-	FVector End = Start + (ForwardVector * 10000.0f); // Trace 10,000 units forward
-
-	FHitResult HitResult;
-	FCollisionQueryParams TraceParams;
-	TraceParams.AddIgnoredActor(this); // Ignore self
-
-	bool bHit = GetWorld()->LineTraceSingleByChannel(
-		HitResult,
-		Start,
-		End,
-		ECC_Visibility,
-		TraceParams
-	);
-
-	if (bHit)
-	{
-		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, false, 1.0f, 0, 1.0f);
-		PullPlayer(HitResult.Location);
-		AttachGrapple(HitResult.Location, HitResult.GetActor());
-	}
-	else
-	{
-		DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 1.0f);
-	}
-}
-
-void ADegreeProjectCharacter::ReleaseGun()
-{
-	GetCapsuleComponent()->SetSimulatePhysics(false);
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	GrappleCable->SetVisibility(false);
-
-	FVector CharacterVelocity = GetCharacterMovement()->Velocity;
-	FVector CharacterDirection = CharacterVelocity.GetSafeNormal();
-
-	FVector LaunchForward = GetFollowCamera()->GetForwardVector() * launchSpeed;
-
-	LaunchCharacter(LaunchForward, true, true);
-}
-
-void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
-{
-    if (!HitActor) return;
-
-    UPrimitiveComponent* HitComponent = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
-    if (!HitComponent) return;
-
-    // Move constraint to the hit location
-    GrappleConstraint->SetWorldLocation(HitLocation);
-
-    // Attach player capsule to the grapple point
-    GrappleConstraint->SetConstrainedComponents(
-        Cast<UPrimitiveComponent>(GetCapsuleComponent()), NAME_None,
-        HitComponent, NAME_None
-    );
-
-    // Set swinging constraints
-    GrappleConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
-    GrappleConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
-    GrappleConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
-
-    GrappleConstraint->SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
-    GrappleConstraint->SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
-    GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
-
-    // Enable the cable component
-    GrappleCable->SetVisibility(true);
-    GrappleCable->SetWorldLocation(HitLocation);
-    GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation) / 10;
-
-    GetCapsuleComponent()->SetSimulatePhysics(true); // Do NOT fully simulate physics
-    GetCapsuleComponent()->SetEnableGravity(true); // Keep gravity enabled
-
-    UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Swinging started."));
-}
+// void ADegreeProjectCharacter::PullPlayer(FVector HitLocation)
+// {
+// 	FVector PlayerLocation = GetActorLocation();
+// 	FVector PullDirection = HitLocation - PlayerLocation;
+// 	PullDirection.Normalize();
+//
+// 	float PullStrength = 1500.f;
+//
+// 	FVector LaunchVelocity = PullDirection * PullStrength;
+// 	
+// 	LaunchCharacter(LaunchVelocity,true, true);
+// }
+//
+// void ADegreeProjectCharacter::FireGun()
+// {
+// 	UE_LOG(LogTemp, Warning, TEXT("Fired the gun!"));
+// 	FVector Start = Muzzle->GetComponentLocation();
+// 	FVector ForwardVector = FollowCamera->GetForwardVector();
+// 	FVector End = Start + (ForwardVector * 10000.0f); // Trace 10,000 units forward
+//
+// 	FHitResult HitResult;
+// 	FCollisionQueryParams TraceParams;
+// 	TraceParams.AddIgnoredActor(this); // Ignore self
+//
+// 	bool bHit = GetWorld()->LineTraceSingleByChannel(
+// 		HitResult,
+// 		Start,
+// 		End,
+// 		ECC_Visibility,
+// 		TraceParams
+// 	);
+//
+// 	if (bHit)
+// 	{
+// 		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, false, 1.0f, 0, 1.0f);
+// 		PullPlayer(HitResult.Location);
+// 		AttachGrapple(HitResult.Location, HitResult.GetActor());
+// 	}
+// 	else
+// 	{
+// 		DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, 0, 1.0f);
+// 	}
+// }
+//
+// void ADegreeProjectCharacter::ReleaseGun()
+// {
+// 	GetCapsuleComponent()->SetSimulatePhysics(false);
+// 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+// 	GrappleCable->SetVisibility(false);
+//
+// 	FVector CharacterVelocity = GetCharacterMovement()->Velocity;
+// 	FVector CharacterDirection = CharacterVelocity.GetSafeNormal();
+//
+// 	FVector LaunchForward = GetFollowCamera()->GetForwardVector() * launchSpeed;
+//
+// 	LaunchCharacter(LaunchForward, true, true);
+// }
+//
+// void ADegreeProjectCharacter::AttachGrapple(FVector HitLocation, AActor* HitActor)
+// {
+//     if (!HitActor) return;
+//
+//     UPrimitiveComponent* HitComponent = Cast<UPrimitiveComponent>(HitActor->GetRootComponent());
+//     if (!HitComponent) return;
+//
+//     // Move constraint to the hit location
+//     GrappleConstraint->SetWorldLocation(HitLocation);
+//
+//     // Attach player capsule to the grapple point
+//     GrappleConstraint->SetConstrainedComponents(
+//         Cast<UPrimitiveComponent>(GetCapsuleComponent()), NAME_None,
+//         HitComponent, NAME_None
+//     );
+//
+//     // Set swinging constraints
+//     GrappleConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+//     GrappleConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+//     GrappleConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Limited, 500.0f);
+//
+//     GrappleConstraint->SetAngularSwing1Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+//     GrappleConstraint->SetAngularSwing2Limit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+//     GrappleConstraint->SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, 360.0f);
+//
+//     // Enable the cable component
+//     GrappleCable->SetVisibility(true);
+//     GrappleCable->SetWorldLocation(HitLocation);
+//     GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation) / 10;
+//
+//     GetCapsuleComponent()->SetSimulatePhysics(true); // Do NOT fully simulate physics
+//     GetCapsuleComponent()->SetEnableGravity(true); // Keep gravity enabled
+//
+//     UE_LOG(LogTemp, Warning, TEXT("Grapple attached! Swinging started."));
+// }
 
 void ADegreeProjectCharacter::FireHook()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Hook fired!"));
 	FVector Start = Muzzle->GetComponentLocation();
 	FVector ForwardVector = FollowCamera->GetForwardVector();
-	FVector End = Start + (ForwardVector * 10000.0f); // Trace 10,000 units forward
+	FVector End = Start + (ForwardVector * 10000.0f);
 
 	FHitResult HitResult;
 	FCollisionQueryParams TraceParams;
-	TraceParams.AddIgnoredActor(this); // Ignore self
+	TraceParams.AddIgnoredActor(this);
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		HitResult,
@@ -280,7 +327,6 @@ void ADegreeProjectCharacter::ReleaseHook()
 {
 	if (bIsSwinging)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("releasing hook"));
 		GrappleCable->SetVisibility(false);
 		bIsSwinging = false;
 	}
@@ -289,15 +335,14 @@ void ADegreeProjectCharacter::ReleaseHook()
 
 void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Swing activated!"));
 	bIsSwinging = true;
-
-
-
+	
+	CurrentGrapplePoint = HitLocation;
+	
 	// Cable
 	GrappleCable->SetVisibility(true);
 	GrappleCable->SetWorldLocation(HitLocation);
-	GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation) / 10;
+	GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation);
 }
 
 
