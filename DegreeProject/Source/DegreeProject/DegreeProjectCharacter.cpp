@@ -63,9 +63,18 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	GrappleConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("GrappleConstraint"));
 	GrappleConstraint->SetupAttachment(RootComponent);
 
+	// GrappleCable->SetupAttachment(GetMesh(), FName("middle_metacarpal_r"));
+	// GrappleCable->bAttachEnd = true;
+
+	GrappleEndPosition = CreateDefaultSubobject<USceneComponent>(TEXT("GrappleEndPosition"));
+	GrappleEndPosition->SetupAttachment(RootComponent);
+	
 	GrappleCable = CreateDefaultSubobject<UCableComponent>(TEXT("GrappleCable"));
-	GrappleCable->SetupAttachment(Muzzle);
+	GrappleCable->SetupAttachment(GetMesh(), FName(TEXT("middle_metacarpal_rSocket")));
 	GrappleCable->bAttachEnd = true;
+	GrappleCable->SetAttachEndToComponent(GrappleEndPosition);
+	GrappleCable->SetVisibility(false); // Start hidden
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -83,7 +92,6 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 
 		FVector Velocity = GetCharacterMovement()->Velocity;
 
-		// Project gravity onto the tangent plane (swing arc)
 		FVector Gravity = FVector(0.f, 0.f, -980.f);
 
 		FVector TangentVelocity = Velocity - FVector::DotProduct(Velocity, RopeDir) * RopeDir;
@@ -95,18 +103,16 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->Velocity = NewVelocity;
 	
 		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), NewVelocity.Size());
+		
+		GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
 	
 		// Optional: update cable visuals
 		// GrappleCable->SetWorldLocation(CurrentGrapplePoint);
-		// GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), CurrentGrapplePoint) / 10;
-	
-		// Rope Direction
-		DrawDebugLine(
-		GetWorld(),
-		GetActorLocation(),
-		CurrentGrapplePoint,
-		FColor::Green,
-		false, -1.f, 0, 2.f);
+		// GrappleCable->bAttachEnd = false;
+		// GrappleCable->EndLocation = CurrentGrapplePoint;
+		// GrappleCable->CableLength = FVector::Dist(GrappleEndPosition->GetComponentLocation(), CurrentGrapplePoint);
+
+		
 	
 		// Velocity Direction
 		DrawDebugLine(
@@ -116,7 +122,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		FColor::Blue,
 		false, -1.f, 0, 2.f);
 	
-		// Tangential Swing
+		// Tangential Gravity
 		DrawDebugLine(
 		GetWorld(),
 		GetActorLocation(),
@@ -253,8 +259,14 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 	GetCharacterMovement()->BrakingDecelerationFalling = 0.0f;
 	GetCharacterMovement()->FallingLateralFriction = 0.0f;
 	GetCharacterMovement()->AirControl = 0.0f;
+	
 	// Cable
-	// GrappleCable->SetVisibility(true);
+	// Move the end position to the grapple point
+	// GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
+	GrappleCable->SetVisibility(true);
+	// GrappleCable->CableLength = FVector::Dist(GrappleCable->GetComponentLocation(), CurrentGrapplePoint);
+	
+	
 	// GrappleCable->SetWorldLocation(HitLocation);
 	// GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation);
 

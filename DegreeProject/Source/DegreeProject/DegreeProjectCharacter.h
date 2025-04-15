@@ -61,6 +61,9 @@ class ADegreeProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
 	UCableComponent* GrappleCable;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
+	USceneComponent* GrappleEndPosition;
+
 public:
 	ADegreeProjectCharacter();
 
