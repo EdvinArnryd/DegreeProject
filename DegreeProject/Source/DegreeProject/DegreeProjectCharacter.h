@@ -13,6 +13,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UCableComponent;
+class UNiagaraComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -64,6 +65,14 @@ class ADegreeProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
 	USceneComponent* GrappleEndPosition;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
+	float SpeedBoostMultiplier = 1.3;
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
+	UNiagaraComponent* SwingSpeedEffect;
+
 public:
 	ADegreeProjectCharacter();
 
@@ -87,6 +96,8 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	void SpeedBoost(float DeltaSeconds);
 
 	virtual void NotifyControllerChanged() override;
 

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DegreeProjectCharacter.h"
+#include "DegreeProjectCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -12,6 +13,8 @@
 #include "InputActionValue.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "CableComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "MovieSceneTracksComponentTypes.h"
 #include "Storage/Nodes/FileEntry.h"
 
@@ -65,12 +68,17 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 
 	GrappleEndPosition = CreateDefaultSubobject<USceneComponent>(TEXT("GrappleEndPosition"));
 	GrappleEndPosition->SetupAttachment(RootComponent);
-	
+
+	// Cable
 	GrappleCable = CreateDefaultSubobject<UCableComponent>(TEXT("GrappleCable"));
 	GrappleCable->SetupAttachment(GetMesh(), FName(TEXT("middle_metacarpal_rSocket")));
 	GrappleCable->bAttachEnd = true;
 	GrappleCable->SetAttachEndToComponent(GrappleEndPosition);
 	GrappleCable->SetVisibility(false);
+	
+	// Niagara
+	SwingSpeedEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Visual Effect"));
+	SwingSpeedEffect->SetupAttachment(RootComponent);
 
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
@@ -192,6 +200,12 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+
+inline void ADegreeProjectCharacter::SpeedBoost(float DeltaSeconds)
+{
+	GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity + SpeedBoostMultiplier * DeltaSeconds;
 }
 
 void ADegreeProjectCharacter::FireHook()
