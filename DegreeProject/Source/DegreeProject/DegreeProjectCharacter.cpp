@@ -63,9 +63,6 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	GrappleConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("GrappleConstraint"));
 	GrappleConstraint->SetupAttachment(RootComponent);
 
-	// GrappleCable->SetupAttachment(GetMesh(), FName("middle_metacarpal_r"));
-	// GrappleCable->bAttachEnd = true;
-
 	GrappleEndPosition = CreateDefaultSubobject<USceneComponent>(TEXT("GrappleEndPosition"));
 	GrappleEndPosition->SetupAttachment(RootComponent);
 	
@@ -73,7 +70,7 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	GrappleCable->SetupAttachment(GetMesh(), FName(TEXT("middle_metacarpal_rSocket")));
 	GrappleCable->bAttachEnd = true;
 	GrappleCable->SetAttachEndToComponent(GrappleEndPosition);
-	GrappleCable->SetVisibility(false); // Start hidden
+	GrappleCable->SetVisibility(false);
 
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
@@ -103,16 +100,6 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		GetCharacterMovement()->Velocity = NewVelocity;
 	
 		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), NewVelocity.Size());
-		
-		GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
-	
-		// Optional: update cable visuals
-		// GrappleCable->SetWorldLocation(CurrentGrapplePoint);
-		// GrappleCable->bAttachEnd = false;
-		// GrappleCable->EndLocation = CurrentGrapplePoint;
-		// GrappleCable->CableLength = FVector::Dist(GrappleEndPosition->GetComponentLocation(), CurrentGrapplePoint);
-
-		
 	
 		// Velocity Direction
 		DrawDebugLine(
@@ -259,19 +246,12 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 	GetCharacterMovement()->BrakingDecelerationFalling = 0.0f;
 	GetCharacterMovement()->FallingLateralFriction = 0.0f;
 	GetCharacterMovement()->AirControl = 0.0f;
-	
-	// Cable
-	// Move the end position to the grapple point
-	// GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
-	GrappleCable->SetVisibility(true);
-	// GrappleCable->CableLength = FVector::Dist(GrappleCable->GetComponentLocation(), CurrentGrapplePoint);
-	
-	
-	// GrappleCable->SetWorldLocation(HitLocation);
-	// GrappleCable->CableLength = FVector::Dist(Muzzle->GetComponentLocation(), HitLocation);
 
-	// Give it an initial lateral swing to the right
-	// GetCharacterMovement()->Velocity += GetActorForwardVector() * 2000.f;
+	// Cable
+	GrappleCable->SetVisibility(true);
+	// This works, perhaps needs to be in Tick.
+	GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
+	GrappleCable->EndLocation = GrappleEndPosition->GetComponentLocation();
 }
 
 
