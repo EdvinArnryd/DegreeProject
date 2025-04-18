@@ -51,6 +51,9 @@ class ADegreeProjectCharacter : public ACharacter
 	UInputAction* FireGunAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SwingBoostAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	USceneComponent* Muzzle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
@@ -67,16 +70,13 @@ class ADegreeProjectCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
 	float SpeedBoostMultiplier = 1.3;
-
-
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
 	UNiagaraComponent* SwingSpeedEffect;
-
-public:
+	
 	ADegreeProjectCharacter();
-
-	void PullPlayer(FVector HitLocation);
+	
+	virtual void Tick(float DeltaSeconds) override;
 	
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -89,6 +89,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
 	float PublicSwingSpeed = 1.01f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
+	float BoostAmount = 1000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
+	float MaxSwingSpeed = 1500.0f;
+
 protected:
 
 	/** Called for movement input */
@@ -97,17 +103,11 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	void SpeedBoost(float DeltaSeconds);
+	void SpeedBoost();
 
 	virtual void NotifyControllerChanged() override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	void FireGun();
-
-	void ReleaseGun();
-
-	void AttachGrapple(FVector HitLocation, AActor* HitActor);
 
 	void FireHook();
 
@@ -115,14 +115,16 @@ protected:
 
 	void Swing(FVector HitLocation, AActor* HitActor);
 
+	void StartBoosting();
+	void StopBoosting();
+
 	bool bIsSwinging;
 	
 	bool bIsGrappling;
 
+	bool bIsBoosting;
+
 	UPROPERTY()
 	FVector CurrentGrapplePoint;
-
-public:
-	virtual void Tick(float DeltaSeconds) override;
 };
 

@@ -79,6 +79,8 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	// Niagara
 	SwingSpeedEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Visual Effect"));
 	SwingSpeedEffect->SetupAttachment(RootComponent);
+	SwingSpeedEffect->SetAutoActivate(false);
+
 
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
@@ -104,26 +106,29 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		FVector TangentGravity = Gravity - FVector::DotProduct(Gravity, RopeDir) * RopeDir;
 
 		FVector NewVelocity = TangentVelocity + TangentGravity * DeltaSeconds;
-
-		GetCharacterMovement()->Velocity = NewVelocity;
 	
 		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), NewVelocity.Size());
+		
+		SwingSpeedEffect->SetFloatParameter(TEXT("ExtremeSwingSpeedVFX"), NewVelocity.Size() / 10);
+		
+		
+		GetCharacterMovement()->Velocity = NewVelocity;
 	
-		// Velocity Direction
-		DrawDebugLine(
-		GetWorld(),
-		GetActorLocation(),
-		GetActorLocation() + GetCharacterMovement()->Velocity * 0.1f,
-		FColor::Blue,
-		false, -1.f, 0, 2.f);
-	
-		// Tangential Gravity
-		DrawDebugLine(
-		GetWorld(),
-		GetActorLocation(),
-		GetActorLocation() + TangentGravity * 0.1f,
-		FColor::Red,
-		false, -1.f, 0, 2.f);
+		// // Velocity Direction
+		// DrawDebugLine(
+		// GetWorld(),
+		// GetActorLocation(),
+		// GetActorLocation() + GetCharacterMovement()->Velocity * 0.1f,
+		// FColor::Blue,
+		// false, -1.f, 0, 2.f);
+		//
+		// // Tangential Gravity
+		// DrawDebugLine(
+		// GetWorld(),
+		// GetActorLocation(),
+		// GetActorLocation() + TangentGravity * 0.1f,
+		// FColor::Red,
+		// false, -1.f, 0, 2.f);
 	}
 }
 
@@ -159,6 +164,9 @@ void ADegreeProjectCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 		// Fire Gun
 		EnhancedInputComponent->BindAction(FireGunAction, ETriggerEvent::Started, this, &ADegreeProjectCharacter::FireHook);
 		EnhancedInputComponent->BindAction(FireGunAction, ETriggerEvent::Completed, this, &ADegreeProjectCharacter::ReleaseHook);
+
+		EnhancedInputComponent->BindAction(SwingBoostAction, ETriggerEvent::Started, this, &ADegreeProjectCharacter::StartBoosting);
+		EnhancedInputComponent->BindAction(SwingBoostAction, ETriggerEvent::Completed, this, &ADegreeProjectCharacter::StopBoosting);
 	}
 	else
 	{
@@ -202,10 +210,11 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-
-inline void ADegreeProjectCharacter::SpeedBoost(float DeltaSeconds)
+inline void ADegreeProjectCharacter::SpeedBoost()
 {
-	GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity + SpeedBoostMultiplier * DeltaSeconds;
+	// GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity + SpeedBoostMultiplier * DeltaSeconds;
+
+	
 }
 
 void ADegreeProjectCharacter::FireHook()
@@ -228,12 +237,12 @@ void ADegreeProjectCharacter::FireHook()
 
 	if (bHit)
 	{
-		DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Emerald, false, 1.0f, 0, 1.0f);
+		// DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Emerald, false, 1.0f, 0, 1.0f);
 		Swing(HitResult.Location, HitResult.GetActor());
 	}
 	else
 	{
-		DrawDebugLine(GetWorld(), Start, End, FColor::Purple, false, 1.0f, 0, 1.0f);
+		// DrawDebugLine(GetWorld(), Start, End, FColor::Purple, false, 1.0f, 0, 1.0f);
 	}
 }
 
@@ -247,6 +256,9 @@ void ADegreeProjectCharacter::ReleaseHook()
 		GetCharacterMovement()->BrakingDecelerationFalling = 1.0f;
 		GetCharacterMovement()->FallingLateralFriction = 1.0f;
 		GetCharacterMovement()->AirControl = 1.0f;
+
+		//VFX
+		SwingSpeedEffect->Deactivate();
 	}
 		
 }
@@ -266,6 +278,19 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 	// This works, perhaps needs to be in Tick.
 	GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
 	GrappleCable->EndLocation = GrappleEndPosition->GetComponentLocation();
+
+	//VFX
+	SwingSpeedEffect->Activate();
+}
+
+void ADegreeProjectCharacter::StartBoosting()
+{
+	bIsBoosting = true;
+}
+
+void ADegreeProjectCharacter::StopBoosting()
+{
+	bIsBoosting = false;
 }
 
 
