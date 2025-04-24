@@ -237,12 +237,10 @@ void ADegreeProjectCharacter::FireHook()
 
 	if (bHit)
 	{
-		// DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Emerald, false, 1.0f, 0, 1.0f);
 		Swing(HitResult.Location, HitResult.GetActor());
 	}
 	else
 	{
-		// DrawDebugLine(GetWorld(), Start, End, FColor::Purple, false, 1.0f, 0, 1.0f);
 	}
 }
 
@@ -275,7 +273,6 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 
 	// Cable
 	GrappleCable->SetVisibility(true);
-	// This works, perhaps needs to be in Tick.
 	GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
 	GrappleCable->EndLocation = GrappleEndPosition->GetComponentLocation();
 
