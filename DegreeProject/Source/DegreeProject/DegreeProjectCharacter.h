@@ -122,6 +122,8 @@ protected:
 	
 	bool bIsGrappling;
 
+	// Make this into Blueprintable
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsBoosting;
 
 	UPROPERTY()

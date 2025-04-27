@@ -283,11 +283,14 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 void ADegreeProjectCharacter::StartBoosting()
 {
 	bIsBoosting = true;
+
+	UE_LOG(LogTemp, Display, TEXT("StartBoosting"));
 }
 
 void ADegreeProjectCharacter::StopBoosting()
 {
 	bIsBoosting = false;
+	UE_LOG(LogTemp, Display, TEXT("StartBoosting"));
 }
 
 
