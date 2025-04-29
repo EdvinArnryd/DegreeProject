@@ -113,7 +113,14 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		
 		
 		GetCharacterMovement()->Velocity = NewVelocity;
-	
+		
+		if (bIsBoosting)
+		{
+			UE_LOG(LogTemp, Display,TEXT("BOOSTING!"));
+			GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 10;
+		}
+
+		
 		// // Velocity Direction
 		// DrawDebugLine(
 		// GetWorld(),
@@ -283,7 +290,6 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 void ADegreeProjectCharacter::StartBoosting()
 {
 	bIsBoosting = true;
-
 	UE_LOG(LogTemp, Display, TEXT("StartBoosting"));
 }
 
