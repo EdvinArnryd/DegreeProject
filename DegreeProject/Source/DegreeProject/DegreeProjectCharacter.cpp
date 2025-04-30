@@ -117,7 +117,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		if (bIsBoosting)
 		{
 			UE_LOG(LogTemp, Display,TEXT("BOOSTING!"));
-			GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 10;
+			GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 20;
 		}
 
 		
