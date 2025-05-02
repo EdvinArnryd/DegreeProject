@@ -95,6 +95,11 @@ class ADegreeProjectCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
 	float MaxSwingSpeed = 1500.0f;
 
+public:
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Swing")
+	bool bIsSwinging;
+
 protected:
 
 	/** Called for movement input */
@@ -118,7 +123,6 @@ protected:
 	void StartBoosting();
 	void StopBoosting();
 
-	bool bIsSwinging;
 	
 	bool bIsGrappling;
 
