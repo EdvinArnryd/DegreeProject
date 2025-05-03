@@ -214,6 +214,12 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+
+		// Rotate character to camera direction
+		FVector CameraDirection = GetFollowCamera()->GetForwardVector();
+
+		FRotator CharacterRotation = CameraDirection.Rotation();
+		SetActorRotation(CharacterRotation);
 	}
 }
 
