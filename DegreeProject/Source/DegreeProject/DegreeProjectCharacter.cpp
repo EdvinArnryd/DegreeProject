@@ -117,10 +117,21 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		if (bIsBoosting)
 		{
 			UE_LOG(LogTemp, Display,TEXT("BOOSTING!"));
-			GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 20;
+			if (GetCharacterMovement()->Velocity.Size() < 5000)
+			{
+				GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 20;
+			}
 		}
 
+		FRotator RotateToRope = TangentVelocity.Rotation();
+		RotateToRope.Roll = 0;
+		RotateToRope.Yaw = 0;
+		// RotateToRope.Pitch *= -1;
+
+		RotateToRope.Normalize();
 		
+		// AddActorLocalRotation(RotateToRope);
+		AddActorLocalRotation(RotateToRope);
 		// // Velocity Direction
 		// DrawDebugLine(
 		// GetWorld(),
@@ -216,10 +227,10 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 
 		// Rotate character to camera direction
-		FVector CameraDirection = GetFollowCamera()->GetForwardVector();
-
-		FRotator CharacterRotation = CameraDirection.Rotation();
-		SetActorRotation(CharacterRotation);
+		// FVector CameraDirection = GetFollowCamera()->GetForwardVector();
+		//
+		// FRotator CharacterRotation = CameraDirection.Rotation();
+		// SetActorRotation(CharacterRotation);
 	}
 }
 
