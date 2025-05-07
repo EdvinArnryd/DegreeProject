@@ -123,15 +123,42 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 			}
 		}
 
-		FRotator RotateToRope = TangentVelocity.Rotation();
-		RotateToRope.Roll = 0;
-		RotateToRope.Yaw = 0;
-		// RotateToRope.Pitch *= -1;
-
-		RotateToRope.Normalize();
-		
+		// FRotator RotateToRope = TangentVelocity.Rotation();
+		// RotateToRope.Roll *= -1;
+		// RotateToRope.Yaw = 0;
+		// // RotateToRope.Pitch *= -1;
+		//
+		// RotateToRope.Normalize();
+		//
+		// // AddActorLocalRotation(RotateToRope);
 		// AddActorLocalRotation(RotateToRope);
-		AddActorLocalRotation(RotateToRope);
+
+		// Rope direction (from character to anchor point)
+		FVector RopeDirection = (CurrentGrapplePoint - GetActorLocation()).GetSafeNormal();
+
+		// Tangent swing velocity
+		// FVector TangentVelocity = GetCharacterMovement()->Velocity - FVector::DotProduct(GetCharacterMovement()->Velocity, RopeDirection) * RopeDirection;
+		TangentVelocity.Normalize();
+
+		// Construct a rotation where:
+		FVector Forward = TangentVelocity; // direction of swing
+		FVector Up = RopeDirection; // character "hangs" from the rope
+		FVector Right = FVector::CrossProduct(Up, Forward);
+
+		// Reconstruct forward to ensure orthogonality
+		Forward = FVector::CrossProduct(Right, Up);
+
+		// Create rotation matrix
+		FMatrix RotationMatrix(Forward, Right, Up, FVector::ZeroVector);
+		FRotator NewRotation = RotationMatrix.Rotator();
+
+		// Apply rotation directly
+		SetActorRotation(NewRotation);
+
+
+
+
+		
 		// // Velocity Direction
 		// DrawDebugLine(
 		// GetWorld(),
