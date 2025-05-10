@@ -81,6 +81,17 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	SwingSpeedEffect->SetupAttachment(RootComponent);
 	SwingSpeedEffect->SetAutoActivate(false);
 
+	// Look into root motion for the animations, I think that's the issue
+
+	// Next look into the rope and how to "animatate" it.
+	// Probably need to move the end of the rope towards the hook point by attaching it to an invisible object?
+	// Then move that object into the direction that was shot.
+	// And at the same time that the rope is flying, spawn more "parts" of the rope, to make it "move" and look
+	// more like a sling shot.
+
+	// Following up on this. Adding animation to the slingshot. only being able to swing when the hook has landed.
+	// This will basically just be a bool to see if we hit the hook or not, then the swing can start.
+	
 
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
