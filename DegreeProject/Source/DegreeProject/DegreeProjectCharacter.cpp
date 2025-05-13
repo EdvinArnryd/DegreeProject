@@ -116,7 +116,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 
 		FVector TangentGravity = Gravity - FVector::DotProduct(Gravity, RopeDir) * RopeDir;
 
-		FVector NewVelocity = TangentVelocity + TangentGravity * DeltaSeconds;
+		FVector NewVelocity = TangentVelocity + Gravity * DeltaSeconds;
 	
 		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), NewVelocity.Size());
 		
