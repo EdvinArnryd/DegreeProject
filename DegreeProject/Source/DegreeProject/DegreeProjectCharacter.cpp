@@ -122,7 +122,6 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		
 		SwingSpeedEffect->SetFloatParameter(TEXT("ExtremeSwingSpeedVFX"), NewVelocity.Size() / 10);
 		
-		
 		GetCharacterMovement()->Velocity = NewVelocity;
 		
 		if (bIsBoosting)
