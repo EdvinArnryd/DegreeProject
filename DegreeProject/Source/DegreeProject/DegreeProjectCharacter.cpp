@@ -147,6 +147,20 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		SetActorRotation(NewRotation);
 
 
+		// Dynamically adjust FOV based on velocity
+		float CurrentSpeed = GetVelocity().Size();
+		float TargetFOV = FMath::GetMappedRangeValueClamped(
+			FVector2D(0.0f, 2000.0f), // Min and max expected speed
+			FVector2D(BaseFOV, MaxFOV),
+			CurrentSpeed
+		);
+
+		// Smoothly interpolate FOV
+		float NewFOV = FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaSeconds, FOVInterpSpeed);
+		FollowCamera->SetFieldOfView(NewFOV);
+
+
+
 
 
 		

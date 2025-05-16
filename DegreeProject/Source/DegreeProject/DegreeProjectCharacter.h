@@ -132,5 +132,11 @@ protected:
 
 	UPROPERTY()
 	FVector CurrentGrapplePoint;
+
+	// In the .h file
+	float BaseFOV = 90.0f;
+	float MaxFOV = 110.0f;
+	float FOVInterpSpeed = 5.0f;
+
 };
 
