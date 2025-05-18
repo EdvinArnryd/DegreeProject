@@ -73,6 +73,14 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// Dynamically adjust FOV based on velocity
+	float CurrentSpeed = GetVelocity().Size();
+	float TargetFOV = FMath::GetMappedRangeValueClamped(
+		FVector2D(0.0f, MaxSwingSpeed),
+		FVector2D(BaseFOV, MaxFOV),
+		CurrentSpeed
+	);
+	
 	if (bIsSwinging)
 	{
 		FVector DirectionToAnchor = (CurrentGrapplePoint - GetActorLocation());
@@ -85,22 +93,20 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 
 		FVector TangentVelocity = Velocity - FVector::DotProduct(Velocity, RopeDir) * RopeDir;
 
-		// FVector TangentGravity = Gravity - FVector::DotProduct(Gravity, RopeDir) * RopeDir;
-
 		FVector NewVelocity = TangentVelocity + Gravity * DeltaSeconds;
 		
 		GetCharacterMovement()->Velocity = NewVelocity;
 		
 		if (bIsBoosting)
 		{
-			if (GetCharacterMovement()->Velocity.Size() < 5000)
+			if (GetCharacterMovement()->Velocity.Size() < MaxSwingSpeed)
 			{
 				GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 20;
 			}
 		}
-		
-		FVector RopeDirection = (CurrentGrapplePoint - GetActorLocation()).GetSafeNormal();
 
+		// Rotate to rope
+		FVector RopeDirection = (CurrentGrapplePoint - GetActorLocation()).GetSafeNormal();
 		TangentVelocity.Normalize();
 
 		FVector Forward = TangentVelocity;
@@ -112,19 +118,15 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		FRotator NewRotation = RotationMatrix.Rotator();
 		SetActorRotation(NewRotation);
 
-
-		// Dynamically adjust FOV based on velocity
-		float CurrentSpeed = GetVelocity().Size();
-		float TargetFOV = FMath::GetMappedRangeValueClamped(
-			FVector2D(0.0f, 2000.0f),
-			FVector2D(BaseFOV, MaxFOV),
-			CurrentSpeed
-		);
-
-		// Smoothly interpolate FOV
+		// Interpolate FOV
 		float NewFOV = FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaSeconds, FOVInterpSpeed);
 		FollowCamera->SetFieldOfView(NewFOV);
 		
+	}
+	else
+	{
+		float NewFOV = FMath::FInterpTo(FollowCamera->FieldOfView, BaseFOV, DeltaSeconds, FOVInterpSpeed);
+		FollowCamera->SetFieldOfView(NewFOV);
 	}
 }
 

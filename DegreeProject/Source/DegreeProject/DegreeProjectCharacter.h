@@ -82,7 +82,7 @@ class ADegreeProjectCharacter : public ACharacter
 	float BoostAmount = 1000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
-	float MaxSwingSpeed = 1500.0f;
+	float MaxSwingSpeed = 5000.0f;
 
 public:
 	
@@ -122,10 +122,10 @@ protected:
 	float BaseFOV = 90.0f;
 	
 	UPROPERTY(EditAnywhere)
-	float MaxFOV = 110.0f;
+	float MaxFOV = 130.0f;
 	
 	UPROPERTY(EditAnywhere)
-	float FOVInterpSpeed = 5.0f;
+	float FOVInterpSpeed = 3.0f;
 
 };
 
