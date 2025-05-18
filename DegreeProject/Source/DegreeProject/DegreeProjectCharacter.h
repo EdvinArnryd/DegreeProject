@@ -7,13 +7,11 @@
 #include "Logging/LogMacros.h"
 #include "DegreeProjectCharacter.generated.h"
 
-class UPhysicsConstraintComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UCableComponent;
-class UNiagaraComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -57,12 +55,6 @@ class ADegreeProjectCharacter : public ACharacter
 	USceneComponent* Muzzle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
-	UPhysicsConstraintComponent* PhysicsConstraint;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
-	UPhysicsConstraintComponent* GrappleConstraint;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
 	UCableComponent* GrappleCable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Physics",  meta = (AllowPrivateAccess = "true"))
@@ -70,9 +62,6 @@ class ADegreeProjectCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
 	float SpeedBoostMultiplier = 1.3;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Swing",  meta = (AllowPrivateAccess = "true"))
-	UNiagaraComponent* SwingSpeedEffect;
 	
 	ADegreeProjectCharacter();
 	
@@ -108,8 +97,6 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-	void SpeedBoost();
-
 	virtual void NotifyControllerChanged() override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -122,20 +109,22 @@ protected:
 
 	void StartBoosting();
 	void StopBoosting();
-
 	
 	bool bIsGrappling;
-
-	// Make this into Blueprintable
+	
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsBoosting;
 
 	UPROPERTY()
 	FVector CurrentGrapplePoint;
 
-	// In the .h file
+	UPROPERTY(EditAnywhere)
 	float BaseFOV = 90.0f;
+	
+	UPROPERTY(EditAnywhere)
 	float MaxFOV = 110.0f;
+	
+	UPROPERTY(EditAnywhere)
 	float FOVInterpSpeed = 5.0f;
 
 };

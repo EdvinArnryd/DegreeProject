@@ -13,8 +13,6 @@
 #include "InputActionValue.h"
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "CableComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "NiagaraComponent.h"
 #include "MovieSceneTracksComponentTypes.h"
 #include "Storage/Nodes/FileEntry.h"
 
@@ -60,12 +58,6 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	Muzzle = CreateDefaultSubobject<USceneComponent>(TEXT("Muzzle"));
 	Muzzle->SetupAttachment(RootComponent);
 
-	PhysicsConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("PhysicsConstraint"));
-	PhysicsConstraint->SetupAttachment(RootComponent);
-
-	GrappleConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("GrappleConstraint"));
-	GrappleConstraint->SetupAttachment(RootComponent);
-
 	GrappleEndPosition = CreateDefaultSubobject<USceneComponent>(TEXT("GrappleEndPosition"));
 	GrappleEndPosition->SetupAttachment(RootComponent);
 
@@ -75,27 +67,6 @@ ADegreeProjectCharacter::ADegreeProjectCharacter()
 	GrappleCable->bAttachEnd = true;
 	GrappleCable->SetAttachEndToComponent(GrappleEndPosition);
 	GrappleCable->SetVisibility(false);
-	
-	// Niagara
-	SwingSpeedEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Visual Effect"));
-	SwingSpeedEffect->SetupAttachment(RootComponent);
-	SwingSpeedEffect->SetAutoActivate(false);
-
-	// Look into root motion for the animations, I think that's the issue
-
-	// Next look into the rope and how to "animatate" it.
-	// Probably need to move the end of the rope towards the hook point by attaching it to an invisible object?
-	// Then move that object into the direction that was shot.
-	// And at the same time that the rope is flying, spawn more "parts" of the rope, to make it "move" and look
-	// more like a sling shot.
-
-	// Following up on this. Adding animation to the slingshot. only being able to swing when the hook has landed.
-	// This will basically just be a bool to see if we hit the hook or not, then the swing can start.
-	
-
-
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
 void ADegreeProjectCharacter::Tick(float DeltaSeconds)
@@ -117,16 +88,11 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		// FVector TangentGravity = Gravity - FVector::DotProduct(Gravity, RopeDir) * RopeDir;
 
 		FVector NewVelocity = TangentVelocity + Gravity * DeltaSeconds;
-	
-		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), NewVelocity.Size());
-		
-		SwingSpeedEffect->SetFloatParameter(TEXT("ExtremeSwingSpeedVFX"), NewVelocity.Size() / 10);
 		
 		GetCharacterMovement()->Velocity = NewVelocity;
 		
 		if (bIsBoosting)
 		{
-			UE_LOG(LogTemp, Display,TEXT("BOOSTING!"));
 			if (GetCharacterMovement()->Velocity.Size() < 5000)
 			{
 				GetCharacterMovement()->Velocity += GetCharacterMovement()->GetForwardVector() * 20;
@@ -150,7 +116,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		// Dynamically adjust FOV based on velocity
 		float CurrentSpeed = GetVelocity().Size();
 		float TargetFOV = FMath::GetMappedRangeValueClamped(
-			FVector2D(0.0f, 2000.0f), // Min and max expected speed
+			FVector2D(0.0f, 2000.0f),
 			FVector2D(BaseFOV, MaxFOV),
 			CurrentSpeed
 		);
@@ -158,27 +124,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 		// Smoothly interpolate FOV
 		float NewFOV = FMath::FInterpTo(FollowCamera->FieldOfView, TargetFOV, DeltaSeconds, FOVInterpSpeed);
 		FollowCamera->SetFieldOfView(NewFOV);
-
-
-
-
-
 		
-		// // Velocity Direction
-		// DrawDebugLine(
-		// GetWorld(),
-		// GetActorLocation(),
-		// GetActorLocation() + GetCharacterMovement()->Velocity * 0.1f,
-		// FColor::Blue,
-		// false, -1.f, 0, 2.f);
-		//
-		// // Tangential Gravity
-		// DrawDebugLine(
-		// GetWorld(),
-		// GetActorLocation(),
-		// GetActorLocation() + TangentGravity * 0.1f,
-		// FColor::Red,
-		// false, -1.f, 0, 2.f);
 	}
 }
 
@@ -220,7 +166,6 @@ void ADegreeProjectCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
@@ -257,20 +202,7 @@ void ADegreeProjectCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
-
-		// Rotate character to camera direction
-		// FVector CameraDirection = GetFollowCamera()->GetForwardVector();
-		//
-		// FRotator CharacterRotation = CameraDirection.Rotation();
-		// SetActorRotation(CharacterRotation);
 	}
-}
-
-inline void ADegreeProjectCharacter::SpeedBoost()
-{
-	// GetCharacterMovement()->Velocity = GetCharacterMovement()->Velocity + SpeedBoostMultiplier * DeltaSeconds;
-
-	
 }
 
 void ADegreeProjectCharacter::FireHook()
@@ -310,9 +242,6 @@ void ADegreeProjectCharacter::ReleaseHook()
 		GetCharacterMovement()->BrakingDecelerationFalling = 1.0f;
 		GetCharacterMovement()->FallingLateralFriction = 1.0f;
 		GetCharacterMovement()->AirControl = 1.0f;
-
-		//VFX
-		SwingSpeedEffect->Deactivate();
 	}
 		
 }
@@ -331,21 +260,16 @@ void ADegreeProjectCharacter::Swing(FVector HitLocation, AActor* HitActor)
 	GrappleCable->SetVisibility(true);
 	GrappleEndPosition->SetWorldLocation(CurrentGrapplePoint);
 	GrappleCable->EndLocation = GrappleEndPosition->GetComponentLocation();
-
-	//VFX
-	SwingSpeedEffect->Activate();
 }
 
 void ADegreeProjectCharacter::StartBoosting()
 {
 	bIsBoosting = true;
-	UE_LOG(LogTemp, Display, TEXT("StartBoosting"));
 }
 
 void ADegreeProjectCharacter::StopBoosting()
 {
 	bIsBoosting = false;
-	UE_LOG(LogTemp, Display, TEXT("StartBoosting"));
 }
 
 
