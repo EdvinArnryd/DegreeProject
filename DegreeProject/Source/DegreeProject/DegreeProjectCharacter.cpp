@@ -73,7 +73,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// Dynamically adjust FOV based on velocity
+	// FOV calculations
 	float CurrentSpeed = GetVelocity().Size();
 	float TargetFOV = FMath::GetMappedRangeValueClamped(
 		FVector2D(0.0f, MaxSwingSpeed),
@@ -105,7 +105,7 @@ void ADegreeProjectCharacter::Tick(float DeltaSeconds)
 			}
 		}
 
-		// Rotate to rope
+		// Rotate actor to rope
 		FVector RopeDirection = (CurrentGrapplePoint - GetActorLocation()).GetSafeNormal();
 		TangentVelocity.Normalize();
 
